@@ -146,7 +146,7 @@ int main(int argc, char const *argv[])
 		
 		printLine();
 		
-		char *text = "TERMTRIS";
+		char *text = "CTRIS";
 		
 		printCentered(text);
 		char puntsText[15];
