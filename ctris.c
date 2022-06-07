@@ -7,15 +7,14 @@
 #include <termios.h>
 #include <string.h>
 
-#define PIECES 7
 #define HEIGHT 20
 #define WIDTH 10
 
-struct Piece {
-	int data[4][4][4];
-};
+typedef struct {
+	int *data;
+} Piece;
 
-struct Piece peces[PIECES];
+Piece *peces;
 
 char buf[1];
 
@@ -23,11 +22,13 @@ int currentPiece = 0;
 int currentRotation = 0;
 int pieces = 0;
 
+int npieces = -1;
+
 unsigned int crows, ccols;
-void definePieces();
+void definePieces(FILE* gameData);
 void printLine();
 void cleanScreen();
-void startGame();
+void startGame(FILE* gameData);
 void dropPiece(int* taula);
 void exitGame();
 void getHitbox(int* readData, int* writeData);
@@ -49,9 +50,7 @@ int defaultSoftTime;
 
 int main(int argc, char const *argv[])
 {
-	startGame();
-
-	refreshConsoleSize();
+	FILE* gameData;
 
 	int frame = 0;
 	int punts = 0;
@@ -60,6 +59,20 @@ int main(int argc, char const *argv[])
 	int currentSoftTime = 0;
 
 	int taula[HEIGHT][WIDTH];
+
+
+	gameData = fopen("ctris.data", "r");
+	if(gameData == NULL){
+		printf("No s'ha pogut obrir ctris.data\n");
+		exit(1);
+	}
+
+	startGame(gameData);
+
+	fclose(gameData);
+
+	refreshConsoleSize();
+
 	// Posar la taula 0s:
 	for(int y = 0; y < HEIGHT; y++){
 		for(int x = 0; x < WIDTH; x++){
@@ -77,7 +90,7 @@ int main(int argc, char const *argv[])
 		
 
 		int writeData[4];
-		getHitbox(peces[currentPiece].data[currentRotation], writeData);
+		getHitbox(peces[currentPiece].data + currentRotation * 16, writeData);
 		int left = writeData[0], right = writeData[1], up = writeData[2], down = writeData[3];
 
 		if(input == 'a'){
@@ -86,7 +99,6 @@ int main(int argc, char const *argv[])
 		if(input == 'd'){
 			if(pieceFits(taula, cursorx + 1, cursory, currentRotation, currentPiece)) cursorx++;
 		}
-
 		
 		if(pieceFits(taula, cursorx, cursory + 1, currentRotation, currentPiece)){
 			currentSoftTime = 0;
@@ -194,6 +206,7 @@ int main(int argc, char const *argv[])
 
 		frame++;
 	} while(buf[0] != '.');
+
 	exitGame();
 }
 
@@ -222,7 +235,24 @@ void cleanScreen(){
 		refreshConsoleSize();
 }
 
-void definePieces(){
+void definePieces(FILE* gameData){
+	
+	int i, j, r;
+	fscanf(gameData, "%d", &npieces);
+	printf("%d\n", npieces);
+
+	peces = (Piece*) malloc(npieces * sizeof(Piece));
+
+	for(i = 0; i < npieces; i++){
+		peces[i].data = (int *) malloc(64 * sizeof(int));
+		for(j = 0; j < 64; j++){
+			fscanf(gameData, "%d", &r);
+			peces[i].data[j] = r;
+			printf("%d ", peces[i].data[j]);
+		}
+		printf("\n");	
+	}
+	/*
 	struct Piece I = {0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0};
 	struct Piece O = {0,0,0,0,0,2,2,0,0,2,2,0,0,0,0,0,0,0,0,0,0,2,2,0,0,2,2,0,0,0,0,0,0,0,0,0,0,2,2,0,0,2,2,0,0,0,0,0,0,0,0,0,0,2,2,0,0,2,2,0,0,0,0,0};
 	struct Piece J = {0,0,0,0,0,0,0,0,3,3,3,0,0,0,3,0,0,0,0,0,0,3,0,0,0,3,0,0,3,3,0,0,0,0,0,0,3,0,0,0,3,3,3,0,0,0,0,0,0,0,0,0,0,3,3,0,0,3,0,0,0,3,0,0};
@@ -231,7 +261,6 @@ void definePieces(){
 	struct Piece T = {0,0,0,0,0,0,0,0,6,6,6,0,0,6,0,0,0,0,0,0,0,6,0,0,6,6,0,0,0,6,0,0,0,0,0,0,0,6,0,0,6,6,6,0,0,0,0,0,0,0,0,0,0,6,0,0,0,6,6,0,0,6,0,0};
 	struct Piece Z = {0,0,0,0,0,0,0,0,7,7,0,0,0,7,7,0,0,0,0,0,0,0,7,0,0,7,7,0,0,7,0,0,0,0,0,0,0,0,0,0,7,7,0,0,0,7,7,0,0,0,0,0,0,0,7,0,0,7,7,0,0,7,0,0};
 
-
 	peces[0] = I;
 	peces[1] = O;
 	peces[2] = J;
@@ -239,19 +268,27 @@ void definePieces(){
 	peces[4] = S;
 	peces[5] = T;
 	peces[6] = Z;
+	*/
 }
 
 
 
-void startGame(){
+void startGame(FILE* gameData){
 
-	definePieces();
+	definePieces(gameData);
 	srand((unsigned) time(NULL));
 
 	system ("/bin/stty raw");
 }
 
 void exitGame(){
+	int i = 0;
+
+	for(i = 0; i < npieces; i++){
+		free(peces[i].data);
+	}
+		
+	free(peces);
 	system ("/bin/stty cooked");
 }
 
@@ -360,9 +397,9 @@ void dropPiece(int* taula){
 		for(int xd = 0; xd < 4; xd++){
 			if(xd + cursorx > WIDTH || xd + cursorx < 0) continue; 
 			for(int yd = 0; yd < 4; yd++){
-				if(!peces[currentPiece].data[currentRotation][yd][xd]) continue;
+				if(!peces[currentPiece].data[currentRotation * 16 + yd * 4 + xd]) continue;
 				if(yd + 1 < 4){
-					if(peces[currentPiece].data[currentRotation][yd + 1][xd]) continue;
+					if(peces[currentPiece].data[currentRotation * 16 + (yd + 1) * 4 + xd]) continue;
 				}
 
 				if(taula[(ybed + yd + 1) * WIDTH + xd + cursorx]) grounded = 1;
@@ -380,8 +417,8 @@ void dropPiece(int* taula){
 	
 	for(int yd = 0; yd < 4; yd++){
 		for(int xd = 0; xd < 4; xd++){
-			if(peces[currentPiece].data[currentRotation][yd][xd]){
-				taula[(ybed + yd) * WIDTH + xd + cursorx] = peces[currentPiece].data[currentRotation][yd][xd];
+			if(peces[currentPiece].data[currentRotation * 16 + yd * 4 + xd]){
+				taula[(ybed + yd) * WIDTH + xd + cursorx] = peces[currentPiece].data[currentRotation * 16 + yd * 4 + xd];
 			}	
 		}
 	}
@@ -395,7 +432,7 @@ int isInCurrentPiece(int x, int y, int cursorx, int cursory){
 	if(x >= cursorx && x < cursorx + 4 && y >= cursory && y < cursory + 4){
 		int xd = x - cursorx;
 		int yd = y - cursory;
-		if(peces[currentPiece].data[currentRotation][yd][xd]) return 1;
+		if(peces[currentPiece].data[currentRotation * 16 + yd * 4 + xd]) return 1;
 		else return 0;
 	}
 	return 0;
@@ -417,7 +454,7 @@ int pieceFits(int *taula, int xc, int yc, int rotation, int piece){
 	int fits = 1;
 	for(int xd = 0; xd < 4; xd++){
 		for(int yd = 0; yd < 4; yd++){
-			if(!peces[piece].data[rotation][yd][xd]) continue;
+			if(!peces[piece].data[rotation * 16 + yd * 4 + xd]) continue;
 			if(xc + xd >= WIDTH) fits = 0;
 			if(yc + yd >= HEIGHT) fits = 0;
 			if(xc + xd < 0) fits = 0;
