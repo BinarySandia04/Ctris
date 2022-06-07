@@ -22,4 +22,6 @@ You can compile the code using ``make``. This will also start the game. When you
 
 ``k``: Rotate right
 
+``r``: Restart Game
+
 ``.``: Exit Game

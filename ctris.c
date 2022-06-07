@@ -34,11 +34,13 @@ void exitGame();
 void getHitbox(int* readData, int* writeData);
 void choosePiece();
 void resetCursor();
+void prepareFile(FILE* gameData);
 void refreshConsoleSize();
 void printCentered(char * text);
 void swap(int *a, int *b);
 void permutateBag(int quina, int start, int end, int *bago);
 void printPiece(int code);
+void resetTaulell();
 int pieceFits(int *taula, int xc, int xy, int rotation, int piece);
 
 int isInCurrentPiece(int x, int y, int cursorx, int cursory);
@@ -47,6 +49,8 @@ int cursorx, cursory;
 
 int maxSoftTime;
 int defaultSoftTime;
+
+int taula[HEIGHT][WIDTH];
 
 int main(int argc, char const *argv[])
 {
@@ -58,14 +62,13 @@ int main(int argc, char const *argv[])
 	defaultSoftTime = 60;
 	int currentSoftTime = 0;
 
-	int taula[HEIGHT][WIDTH];
-
-
 	gameData = fopen("ctris.data", "r");
 	if(gameData == NULL){
 		printf("No s'ha pogut obrir ctris.data\n");
 		exit(1);
 	}
+	
+	prepareFile(gameData);
 
 	startGame(gameData);
 
@@ -73,12 +76,7 @@ int main(int argc, char const *argv[])
 
 	refreshConsoleSize();
 
-	// Posar la taula 0s:
-	for(int y = 0; y < HEIGHT; y++){
-		for(int x = 0; x < WIDTH; x++){
-			taula[y][x] = 0;
-		}
-	}
+	resetTaulell();
 
 	resetCursor();
 	
@@ -127,6 +125,13 @@ int main(int argc, char const *argv[])
 			currentRotation--;
 			if(currentRotation == -1) currentRotation = 3;
 		}
+		if(input == 'r'){
+			dropPiece(taula);
+			resetCursor();
+			choosePiece();
+
+			resetTaulell();
+		}
 
 		if(input == ' '){
 			/* Hard drop */
@@ -146,6 +151,14 @@ int main(int argc, char const *argv[])
 				for(int linia = y; linia > 0; linia--){
 					for(int j = 0; j < WIDTH; j++){
 						taula[linia][j] = taula[linia - 1][j];
+					}
+				}
+			}
+
+			if(y < 2){
+				for(int x = 0; x < WIDTH; x++){
+					if(taula[y][x]){
+						resetTaulell();
 					}
 				}
 			}
@@ -480,5 +493,24 @@ void printPiece(int code){
 	printf("■ ");
 
 	printf("\e[0m");
+
+}
+
+void prepareFile(FILE* gameData){
+	char c = '\0';
+	while(c != '#'){
+		fscanf(gameData, "%c", &c);
+	}
+	return;
+}
+
+void resetTaulell(){
+	// Posar la taula 0s:
+	for(int y = 0; y < HEIGHT; y++){
+		for(int x = 0; x < WIDTH; x++){
+			taula[y][x] = 0;
+		}
+	}
+
 
 }
