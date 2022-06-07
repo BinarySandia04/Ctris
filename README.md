@@ -2,7 +2,7 @@
 
 ## What is it?
 
-Ctris is a Tetris like client written in C that can be ran in any regular Linux terminal.
+Ctris is a very simple Tetris client written in C that can be ran in any regular Linux terminal.
 
 ## How can I play it?
 
