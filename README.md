@@ -11,9 +11,15 @@ You can compile the code using ``make``. This will also start the game. When you
 ## Controls
 
 ``a``: Move left
+
 ``d``: Move right
+
 ``s``: Softdrop
+
 ``space``: Hard drop
+
 ``j``: Rotate left
+
 ``k``: Rotate right
+
 ``.``: Exit Game
